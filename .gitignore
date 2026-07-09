@@ -1,0 +1,69 @@
+# ===========================
+# Python
+# ===========================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Python Build
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Cache
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ===========================
+# Project Generated Files
+# ===========================
+
+# FAISS Index
+storage/faiss.index
+storage/documents.pkl
+
+# Uploaded PDFs
+data/raw/
+
+# Temporary Files
+*.tmp
+*.temp
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Coverage
+.coverage
+htmlcov/
+
+# SQLite
+*.db
+*.sqlite3
+
+# Mac/Linux
+*.swp
