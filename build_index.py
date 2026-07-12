@@ -1,54 +1,62 @@
-from config import PDF_PATH, FAISS_STORAGE_PATH
+from pathlib import Path
 
-from loaders.pdf_loader import load_pdf
-from splitters.text_splitter import split_documents
+from config import FAISS_STORAGE_PATH, PDF_PATH, RAW_DATA_DIR
+
 from embeddings.embedding_model import EmbeddingModel
+from loaders.pdf_loader import load_pdfs
+from splitters.text_splitter import split_documents
 from vectorstores.faiss_store import FAISSVectorStore
 
 
-def build_index():
+def _resolve_pdf_paths(pdf_path=None):
+    if pdf_path is not None:
+        path = Path(pdf_path)
+        return [path]
+
+    raw_directory = Path(RAW_DATA_DIR)
+    pdf_paths = sorted(raw_directory.glob("*.pdf"))
+    if pdf_paths:
+        return pdf_paths
+
+    return [Path(PDF_PATH)]
+
+
+def build_index(pdf_path=None):
+    pdf_paths = _resolve_pdf_paths(pdf_path)
+    if not pdf_paths:
+        raise FileNotFoundError("No PDF files were found to build the knowledge base.")
 
     print("=" * 60)
     print("Building Knowledge Base...")
     print("=" * 60)
 
-    # Step 1: Load PDF
-    documents = load_pdf(PDF_PATH)
+    documents = load_pdfs(pdf_paths)
+    print(f"Loaded {len(documents)} pages from {len(pdf_paths)} document(s).")
 
-    print(f"Loaded {len(documents)} pages.")
-
-    # Step 2: Split Documents
     chunks = split_documents(documents)
-
     print(f"Created {len(chunks)} chunks.")
 
-    # Step 3: Load Embedding Model
     embedding_model = EmbeddingModel()
-
-    # Step 4: Generate Embeddings
     embeddings = embedding_model.embed_documents(chunks)
-
     print("Embeddings generated.")
 
-    # Step 5: Create FAISS
-    vector_store = FAISSVectorStore(
-        embeddings.shape[1]
-    )
+    vector_store = FAISSVectorStore(embeddings.shape[1])
+    vector_store.add_documents(embeddings, chunks)
+    vector_store.save(FAISS_STORAGE_PATH)
 
-    # Step 6: Store Vectors
-    vector_store.add_documents(
-        embeddings,
-        chunks
-    )
-
-    # Step 7: Save
-    vector_store.save(
-        FAISS_STORAGE_PATH
-    )
+    summary = {
+        "document_count": len(pdf_paths),
+        "page_count": len(documents),
+        "chunk_count": len(chunks),
+        "storage_path": FAISS_STORAGE_PATH,
+        "document_names": [path.name for path in pdf_paths],
+    }
 
     print()
     print("Knowledge Base Created Successfully!")
     print(f"Saved to: {FAISS_STORAGE_PATH}")
+
+    return summary
 
 
 if __name__ == "__main__":

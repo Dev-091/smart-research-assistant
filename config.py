@@ -1,6 +1,7 @@
 # PDF
 
 PDF_PATH = "data/raw/sample.pdf"
+RAW_DATA_DIR = "data/raw"
 
 # Text Splitter
 
