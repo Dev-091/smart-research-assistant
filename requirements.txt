@@ -6,12 +6,15 @@ langchain-community
 langchain-core
 langchain-openai
 langchain-huggingface
+langchain-groq
+langchain-text-splitters
 
 # ==========================================
 # LLM Providers
 # ==========================================
 openai
 
+groq
 # ==========================================
 # Embedding Models
 # ==========================================
@@ -57,7 +60,13 @@ pandas
 # ==========================================
 # Evaluation Framework
 # ==========================================
-
+ragas
+datasets
+appdirs
+diskcache
+instructor
+dill
+multiprocess
 
 # ==========================================
 # HTTP & Utilities

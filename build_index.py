@@ -69,4 +69,6 @@ def build_index(pdf_path=None, settings=None):
 
 
 if __name__ == "__main__":
-    build_index()
+    from services.app_settings import AppSettingsService
+    settings = AppSettingsService().load_settings()
+    build_index(settings=settings)

@@ -1,8 +1,14 @@
 import json
 import re
+import sys
+import types
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from services.app_settings import AppSettingsService
 from services.rag_service import RAGService
@@ -101,18 +107,21 @@ class RAGEvaluator:
         )
 
     def _try_ragas_metrics(self, case: BenchmarkCase, generated_answer: str, sources: list[dict[str, Any]]):
+        self._install_ragas_compat_shims()
+
         try:
             from datasets import Dataset
-            from langchain_groq import ChatGroq
             from langchain_huggingface import HuggingFaceEmbeddings
+            from langchain_groq import ChatGroq
             from ragas import evaluate
             from ragas.metrics import answer_correctness, answer_relevancy, faithfulness, context_precision
         except Exception:
             return None
 
         try:
-            embeddings = HuggingFaceEmbeddings(model_name=AppSettingsService().load_settings()["models"]["embedding_model"])
-            llm = ChatGroq(model=AppSettingsService().load_settings()["models"]["llm_model"])
+            settings = AppSettingsService().load_settings()
+            embeddings = HuggingFaceEmbeddings(model_name=settings["models"]["embedding_model"])
+            llm = ChatGroq(model=settings["models"]["llm_model"])
 
             contexts = [source.get("chunk_preview", "") for source in sources]
             dataset = Dataset.from_dict(
@@ -129,12 +138,18 @@ class RAGEvaluator:
                 llm=llm,
                 embeddings=embeddings,
             )
-            answer_correctness_score = float(result["answer_correctness"].mean())
+            def _get_mean(metric_name):
+                values = result[metric_name]
+                if hasattr(values, "mean"):
+                    return float(values.mean())
+                return float(sum(values) / len(values)) if values else 0.0
+
+            answer_correctness_score = _get_mean("answer_correctness")
             context_alignment_score = float(
                 (
-                    result["faithfulness"].mean()
-                    + result["context_precision"].mean()
-                    + result["answer_relevancy"].mean()
+                    _get_mean("faithfulness")
+                    + _get_mean("context_precision")
+                    + _get_mean("answer_relevancy")
                 ) / 3
             )
             overall_quality = round((answer_correctness_score + context_alignment_score) / 2, 4)
@@ -144,8 +159,30 @@ class RAGEvaluator:
                 overall_quality,
                 "ragas",
             )
-        except Exception:
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             return None
+
+    @staticmethod
+    def _install_ragas_compat_shims():
+        package_names = [
+            "langchain_community.chat_models",
+            "langchain_community.chat_models.vertexai",
+        ]
+
+        for name in package_names:
+            if name not in sys.modules:
+                sys.modules[name] = types.ModuleType(name)
+
+        vertexai_module = sys.modules["langchain_community.chat_models.vertexai"]
+
+        class ChatVertexAI:  # pragma: no cover - compatibility shim only
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("ChatVertexAI is not available in this environment")
+
+        vertexai_module.ChatVertexAI = ChatVertexAI
+        sys.modules["langchain_community.chat_models"].vertexai = vertexai_module
 
     def _summarize(self, rows: list[EvaluationRow]) -> dict[str, Any]:
         if not rows:

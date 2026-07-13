@@ -1,39 +1,88 @@
 # Smart Research Assistant
 
-A polished Retrieval-Augmented Generation (RAG) assistant designed to help you search, analyze, and summarize documents with AI-powered semantic retrieval.
+A RAG-based document assistant for uploading PDFs, building a local vector index, and asking grounded questions with source-backed responses.
 
-## Key Technologies
+## What This Project Matches From The Brief
 
-- Python 3.11+
+This repo implements the core workflow described in the project PDF:
+
+- document upload and processing
+- chunking and embedding generation
+- FAISS-based vector storage
+- semantic retrieval
+- prompt-based answer generation
+- evaluation with RAG-style metrics
+- Streamlit chat UI
+
+## Workflow
+
+### 1. Data Ingestion
+- PDFs are uploaded through the Streamlit sidebar.
+- Files are stored in `data/raw/`.
+- The knowledge base is rebuilt from all PDFs in that folder.
+
+### 2. Indexing
+- `build_index.py` loads each PDF.
+- Documents are split into chunks.
+- Chunks are embedded with Sentence Transformers.
+- Embeddings and chunk metadata are saved into FAISS.
+
+### 3. Retrieval
+- User questions are embedded.
+- The top-k nearest chunks are retrieved from FAISS.
+- Retrieved context is passed into the prompt builder.
+
+### 4. Answer Generation
+- The LLM receives the question plus retrieved context.
+- The answer is generated only from the retrieved material.
+- Sources are shown in the UI with page numbers and chunk previews.
+
+### 5. Evaluation
+- `evaluation/ragas_eval.py` evaluates answer correctness, context alignment, and overall quality.
+- A benchmark file in `evaluation/benchmark.json` defines the test questions.
+
+## UI
+
+The Streamlit frontend includes:
+
+- PDF upload and document management
+- build/rebuild knowledge base controls
+- settings for retrieval, chunking, and generation
+- chat-style Q&A with source citations
+- response timing and chat export
+
+## Tech Stack
+
+- Python
+- Streamlit
 - LangChain
-- FAISS vector search
-- Sentence Transformers embeddings
-- Groq LLM integration
-- Streamlit UI for interactive use
+- FAISS
+- Sentence Transformers
+- Groq LLM API
+- RAGAS for evaluation
 
-## What This Project Does
+## Evaluation
 
-This repo provides a complete workflow for building a research assistant that can:
+The evaluation module is designed to match the brief:
 
-- load PDF documents
-- split text into searchable chunks
-- generate vector embeddings
-- index embeddings with FAISS
-- perform semantic retrieval
-- build prompts for an LLM
-- answer questions using retrieved context
+- `answer_correctness` measures whether the generated answer matches the expected answer.
+- `context_alignment` measures whether the retrieved context supports the expected answer.
+- `overall_quality` combines the two into one project-level score.
 
-## User Interface
+If the full RAGAS stack is available in the environment, the evaluator uses the real library. Otherwise, it falls back to a local approximation so the workflow remains runnable.
 
-The Streamlit-based frontend is available in `app.py` and offers:
+## Important Note On The Brief
 
-- a drag-and-drop / file upload interface for PDFs
-- document preprocessing status
-- semantic search and chat-style Q&A
-- real-time model responses
-- support for both searching and summarizing research content
+The PDF also mentions some future or optional ideas that are not fully implemented in the current codebase yet:
 
-> Note: The Streamlit UI is currently in active development and improving with each update.
+- TXT and web content ingestion
+- switching between FAISS and ChromaDB in the UI
+- Gradio frontend
+- multi-turn memory beyond Streamlit session chat history
+- highlight-based document section viewer
+- cloud deployment and authentication
+
+Those are good next-step enhancements, but the current codebase focuses on the PDF-first Streamlit RAG workflow.
 
 ## Project Setup
 
@@ -41,7 +90,7 @@ The Streamlit-based frontend is available in `app.py` and offers:
 
 - Python 3.11 or newer
 - `pip` package manager
-- A virtual environment (recommended)
+- A virtual environment is recommended
 
 ### Install Dependencies
 
@@ -52,40 +101,39 @@ venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-### Run the Application
+### Run the App
 
 ```powershell
 streamlit run app.py
 ```
 
-Then open the local URL shown in the terminal to access the UI.
-
-### Build Index / Data Preparation
-
-To prepare documents and build the vector index, use:
+### Build The Index
 
 ```powershell
 python build_index.py
 ```
 
-## Development Notes
+### Run Evaluation
 
-- `loaders/pdf_loader.py` handles PDF reading
-- `splitters/text_splitter.py` performs chunking
-- `embeddings/embedding_model.py` builds semantic vectors
-- `vectorstores/faiss_store.py` manages FAISS indexing
-- `services/rag_service.py` orchestrates retrieval and LLM prompts
+```powershell
+python evaluation\ragas_eval.py
+```
 
-## Project Status
+## Project Structure
 
-- Backend: Completed ✅
-- Streamlit frontend: In Progress 🚧
+- `loaders/` handles document loading
+- `splitters/` handles chunking
+- `embeddings/` handles embeddings
+- `vectorstores/` handles FAISS storage
+- `retrievers/` handles retrieval
+- `llm/` handles prompt building and generation
+- `rag/` orchestrates the full pipeline
+- `services/` contains frontend and app services
+- `components/` contains Streamlit UI modules
+- `evaluation/` contains the RAG benchmark and scoring script
 
-## Contribution
+## Status
 
-Contributions and improvements are welcome. Feel free to open issues or submit pull requests for:
-
-- better UI flow
-- expanded document loader support
-- enhanced prompt templates
-- model / configuration options
+- Backend: completed
+- Frontend: modular and in progress toward production polish
+- Evaluation: implemented with RAGAS-compatible scoring
