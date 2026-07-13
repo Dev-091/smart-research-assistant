@@ -64,6 +64,7 @@ def render_sidebar(document_manager, app_settings, settings_options):
         st.markdown('<p class="sidebar-section-label">Knowledge Base</p>', unsafe_allow_html=True)
         build_index = st.button("Build Knowledge Base", use_container_width=True, disabled=not documents)
         rebuild_index = st.button("Rebuild Knowledge Base", use_container_width=True, disabled=not documents)
+        run_evaluation = st.button("Evaluate Knowledge Base", use_container_width=True, disabled=not documents)
 
         st.markdown('<p class="sidebar-section-label">Documents</p>', unsafe_allow_html=True)
         if documents:
@@ -140,6 +141,7 @@ def render_sidebar(document_manager, app_settings, settings_options):
         "save_uploads": save_uploads,
         "build_index": build_index,
         "rebuild_index": rebuild_index,
+        "run_evaluation": run_evaluation,
         "delete_document": deleted_document,
         "delete_all": delete_all,
         "clear_chat": clear_chat,

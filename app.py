@@ -15,14 +15,29 @@ from services.frontend_state import (
     set_theme,
     update_app_settings,
 )
+from evaluation.ragas_eval import run_evaluation
 
 
 st.set_page_config(
     page_title="Smart Research Assistant",
     page_icon="AI",
-    layout="wide",
     initial_sidebar_state="expanded",
 )
+
+
+@st.dialog("Evaluation Results")
+def _show_evaluation_results(summary):
+    st.write("Here are the performance metrics based on the benchmark dataset:")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Avg Answer Correctness", f"{summary['average_answer_correctness']:.4f}")
+        st.metric("Avg Context Alignment", f"{summary['average_context_alignment']:.4f}")
+    with col2:
+        st.metric("Overall Quality", f"{summary['average_overall_quality']:.4f}")
+        st.metric("Avg Response Time", f"{summary['average_response_time_ms']:.0f} ms")
+    st.caption(f"Evaluated {summary['case_count']} cases using backend: {summary['metric_backend']}")
+    if st.button("Close"):
+        st.rerun()
 
 
 def _handle_sidebar_actions(sidebar_state, document_manager, settings_service):
@@ -77,6 +92,16 @@ def _handle_sidebar_actions(sidebar_state, document_manager, settings_service):
             st.error(f"Knowledge base build failed: {error}")
             return
         st.rerun()
+
+    if sidebar_state.get("run_evaluation"):
+        try:
+            with st.spinner("Evaluating knowledge base with RAGAS..."):
+                eval_results = run_evaluation(settings=st.session_state.app_settings)
+            st.session_state.eval_summary = eval_results["summary"]
+            _show_evaluation_results(st.session_state.eval_summary)
+        except Exception as error:
+            st.error(f"Evaluation failed: {error}")
+            return
 
     if sidebar_state["clear_chat"]:
         clear_chat_history()

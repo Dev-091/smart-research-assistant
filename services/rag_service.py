@@ -30,8 +30,8 @@ class RAGService:
 
         print("System Ready!")
 
-    def ask(self, question):
-        return self.rag.ask(question)
+    def ask(self, question, history=None):
+        return self.rag.ask(question, history=history)
 
     def get_chunk_count(self):
         return len(self.vector_store.documents)

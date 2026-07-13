@@ -15,7 +15,7 @@ def render_chat_transcript():
             if message["role"] == "assistant" and message.get("response_time_ms") is not None:
                 st.caption(f"Response time: {message['response_time_ms']} ms")
             if message["role"] == "assistant" and message.get("sources"):
-                _render_sources(message["sources"])
+                _render_sources(message["sources"], query=st.session_state.messages[st.session_state.messages.index(message)-1]["content"] if st.session_state.messages.index(message) > 0 else "")
             if message["role"] == "assistant" and message.get("download_payload"):
                 st.download_button(
                     "Download chat",
@@ -35,7 +35,11 @@ def _stream_text(text: str):
         time.sleep(0.02)
 
 
-def _render_sources(sources):
+def _render_sources(sources, query=""):
+    import re
+    query_terms = [re.escape(term) for term in re.findall(r"\w+", query.lower()) if len(term) > 3]
+    highlight_pattern = re.compile(rf"\b({'|'.join(query_terms)})\b", flags=re.IGNORECASE) if query_terms else None
+
     with st.expander("Sources", expanded=False):
         for source in sources:
             score = source.get("similarity_score")
@@ -43,7 +47,10 @@ def _render_sources(sources):
             st.markdown(
                 f"**Page {source['page']}** | {source['document_name']} | Score: {score_text}"
             )
-            st.caption(source["chunk_preview"])
+            preview = source["chunk_preview"]
+            if highlight_pattern:
+                preview = highlight_pattern.sub(r"<mark>\1</mark>", preview)
+            st.markdown(f"<div style='font-size:0.85em; color:gray;'>{preview}</div>", unsafe_allow_html=True)
 
 
 def render_chat_panel(rag_service):
@@ -86,13 +93,13 @@ def render_chat_panel(rag_service):
             start = time.perf_counter()
             st.info("Searching documents...")
             with st.spinner("Generating answer..."):
-                result = rag_service.ask(question)
+                result = rag_service.ask(question, history=st.session_state.messages)
             response = result["answer"]
             sources = result.get("sources", [])
             elapsed_ms = int((time.perf_counter() - start) * 1000)
             st.write_stream(_stream_text(response))
             if sources:
-                _render_sources(sources)
+                _render_sources(sources, query=question)
             assistant_payload.update(
                 {
                     "content": response,

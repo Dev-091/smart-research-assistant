@@ -1,6 +1,6 @@
 class PromptBuilder:
 
-    def build_prompt(self, query, documents):
+    def build_prompt(self, query, documents, history=None):
 
         context = ""
 
@@ -14,6 +14,14 @@ class PromptBuilder:
             context += doc.page_content
 
             context += "\n\n"
+            
+        history_text = ""
+        if history:
+            history_text = "Conversation History:\n"
+            for msg in history[-5:]:  # Keep only the last 5 turns to prevent token bloat
+                role = "User" if msg["role"] == "user" else "Assistant"
+                history_text += f"{role}: {msg['content']}\n"
+            history_text += "\n"
 
         prompt = f"""
 You are a helpful AI Research Assistant.
@@ -26,7 +34,7 @@ If the answer is not present in the context, reply exactly:
 
 Context:
 {context}
-
+{history_text}
 Question:
 {query}
 
@@ -51,3 +59,22 @@ Answer:
             )
 
         return citations
+
+    def build_contextualize_prompt(self, query, history):
+        history_text = ""
+        for msg in history[-5:]:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            history_text += f"{role}: {msg['content']}\n"
+        
+        prompt = f"""
+Given a chat history and the latest user question which might reference context in the chat history, formulate a standalone question which can be understood without the chat history. Do NOT answer the question, just reformulate it if needed and otherwise return it as is. ONLY return the standalone question.
+
+Chat History:
+{history_text}
+
+Latest Question:
+{query}
+
+Standalone Question:
+"""
+        return prompt.strip()
