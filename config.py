@@ -23,3 +23,5 @@ FAISS_STORAGE_PATH = "storage"
 # LLM
 
 GROQ_MODEL = "llama-3.3-70b-versatile"
+TEMPERATURE = 0
+MAX_TOKENS = 1024

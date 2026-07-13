@@ -2,6 +2,7 @@ from pathlib import Path
 
 import streamlit as st
 
+from services.app_settings import AppSettingsService
 from services.document_manager import DocumentManager
 from services.rag_service import RAGService
 
@@ -52,12 +53,13 @@ THEME_VARIABLES = {
 
 
 def initialize_session_state():
-    """Create all UI session keys exactly once."""
+    settings_service = AppSettingsService()
     defaults = {
         "messages": [],
         "rag_service": None,
         "theme": DEFAULT_THEME,
         "last_build_summary": None,
+        "app_settings": settings_service.load_settings(),
     }
 
     for key, value in defaults.items():
@@ -66,7 +68,6 @@ def initialize_session_state():
 
 
 def load_stylesheet(path: str):
-    """Load the custom CSS file into the Streamlit page."""
     theme = st.session_state.get("theme", DEFAULT_THEME)
     theme_css = THEME_VARIABLES.get(theme, THEME_VARIABLES[DEFAULT_THEME])
     css = Path(path).read_text(encoding="utf-8")
@@ -74,27 +75,23 @@ def load_stylesheet(path: str):
 
 
 def append_chat_message(role: str, content: str):
-    """Persist a message in session state."""
     st.session_state.messages.append({"role": role, "content": content})
 
 
 def clear_chat_history():
-    """Remove all chat messages from the current session."""
     st.session_state.messages = []
 
 
 def set_theme(theme: str):
-    """Store the selected theme variant."""
     st.session_state.theme = theme
 
 
 def get_rag_service():
-    """Lazily return the backend service if it has already been loaded."""
     if st.session_state.rag_service is not None:
         return st.session_state.rag_service
 
     try:
-        st.session_state.rag_service = RAGService()
+        st.session_state.rag_service = RAGService(settings=st.session_state.app_settings)
     except Exception:
         st.session_state.rag_service = None
 
@@ -102,16 +99,21 @@ def get_rag_service():
 
 
 def reload_rag_service():
-    """Reload the backend service after rebuilding the index."""
-    st.session_state.rag_service = RAGService()
+    st.session_state.rag_service = RAGService(settings=st.session_state.app_settings)
     return st.session_state.rag_service
 
 
 def clear_rag_service():
-    """Remove the current backend service from session state."""
     st.session_state.rag_service = None
 
 
 def get_document_manager():
-    """Return the UI-facing document manager service."""
     return DocumentManager()
+
+
+def get_settings_service():
+    return AppSettingsService()
+
+
+def update_app_settings(settings):
+    st.session_state.app_settings = settings

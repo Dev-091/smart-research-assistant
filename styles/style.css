@@ -226,6 +226,12 @@ html, body, [class*="css"] {
     font-weight: 600;
 }
 
+[data-testid="stExpander"] {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--panel-soft);
+}
+
 .stAlert {
     border-radius: 18px;
 }

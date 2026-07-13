@@ -63,8 +63,8 @@ class DocumentManager:
             if file_path.exists():
                 file_path.unlink()
 
-    def build_knowledge_base(self):
-        return build_index()
+    def build_knowledge_base(self, settings=None):
+        return build_index(settings=settings)
 
     def get_index_stats(self):
         stats = {

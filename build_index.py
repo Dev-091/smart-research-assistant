@@ -21,7 +21,11 @@ def _resolve_pdf_paths(pdf_path=None):
     return [Path(PDF_PATH)]
 
 
-def build_index(pdf_path=None):
+def build_index(pdf_path=None, settings=None):
+    settings = settings or {}
+    chunk_settings = settings.get("chunking") or {}
+    model_settings = settings.get("models") or {}
+
     pdf_paths = _resolve_pdf_paths(pdf_path)
     if not pdf_paths:
         raise FileNotFoundError("No PDF files were found to build the knowledge base.")
@@ -33,10 +37,14 @@ def build_index(pdf_path=None):
     documents = load_pdfs(pdf_paths)
     print(f"Loaded {len(documents)} pages from {len(pdf_paths)} document(s).")
 
-    chunks = split_documents(documents)
+    chunks = split_documents(
+        documents,
+        chunk_size=chunk_settings.get("chunk_size"),
+        chunk_overlap=chunk_settings.get("chunk_overlap"),
+    )
     print(f"Created {len(chunks)} chunks.")
 
-    embedding_model = EmbeddingModel()
+    embedding_model = EmbeddingModel(model_name=model_settings.get("embedding_model"))
     embeddings = embedding_model.embed_documents(chunks)
     print("Embeddings generated.")
 
@@ -50,6 +58,7 @@ def build_index(pdf_path=None):
         "chunk_count": len(chunks),
         "storage_path": FAISS_STORAGE_PATH,
         "document_names": [path.name for path in pdf_paths],
+        "settings": settings,
     }
 
     print()
