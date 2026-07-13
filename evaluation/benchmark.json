@@ -1,0 +1,17 @@
+[
+  {
+    "question": "What is the project building with PDFs and FAISS?",
+    "expected_answer": "The project builds a retrieval augmented generation system for answering questions from uploaded PDFs using FAISS as the vector store.",
+    "expected_sources": ["sample.pdf#page-1"]
+  },
+  {
+    "question": "What does the knowledge base pipeline do before answering questions?",
+    "expected_answer": "It loads PDFs, splits them into chunks, creates embeddings, stores them in FAISS, and then uses retrieval plus an LLM to generate answers.",
+    "expected_sources": ["sample.pdf#page-1"]
+  },
+  {
+    "question": "How does the app keep chat history?",
+    "expected_answer": "The app keeps chat history in Streamlit session state.",
+    "expected_sources": ["sample.pdf#page-1"]
+  }
+]

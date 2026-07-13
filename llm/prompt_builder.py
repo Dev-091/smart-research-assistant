@@ -34,3 +34,20 @@ Answer:
 """
 
         return prompt
+
+    def build_citation_metadata(self, documents, scores=None):
+        citations = []
+
+        for index, doc in enumerate(documents, start=1):
+            metadata = getattr(doc, "metadata", {}) or {}
+            citations.append(
+                {
+                    "source_id": index,
+                    "document_name": metadata.get("document_name", "Unknown document"),
+                    "page": metadata.get("page", 0) + 1,
+                    "chunk_preview": doc.page_content[:300].strip(),
+                    "similarity_score": None if scores is None else scores[index - 1],
+                }
+            )
+
+        return citations

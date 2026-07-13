@@ -1,0 +1,17 @@
+{
+  "retrieval": {
+    "top_k": 3
+  },
+  "chunking": {
+    "chunk_size": 500,
+    "chunk_overlap": 100
+  },
+  "models": {
+    "embedding_model": "sentence-transformers/all-mpnet-base-v2",
+    "llm_model": "llama-3.3-70b-versatile"
+  },
+  "generation": {
+    "temperature": 0.0,
+    "max_tokens": 1024
+  }
+}

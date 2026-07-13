@@ -33,6 +33,20 @@ class FAISSVectorStore:
 
         return results
 
+    def similarity_search_with_scores(self, query_embedding, k=3):
+
+        distances, indices = self.index.search(
+            np.array([query_embedding], dtype=np.float32),
+            k
+        )
+
+        results = []
+
+        for distance, idx in zip(distances[0], indices[0]):
+            results.append((self.documents[idx], float(distance)))
+
+        return results
+
     def save(self, path):
 
         os.makedirs(path, exist_ok=True)

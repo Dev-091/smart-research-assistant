@@ -1,4 +1,6 @@
+import json
 import time
+from datetime import datetime
 
 import streamlit as st
 
@@ -10,6 +12,18 @@ def render_chat_transcript():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            if message["role"] == "assistant" and message.get("response_time_ms") is not None:
+                st.caption(f"Response time: {message['response_time_ms']} ms")
+            if message["role"] == "assistant" and message.get("sources"):
+                _render_sources(message["sources"])
+            if message["role"] == "assistant" and message.get("download_payload"):
+                st.download_button(
+                    "Download chat",
+                    data=message["download_payload"],
+                    file_name="smart-research-chat.json",
+                    mime="application/json",
+                    key=f"download_{message['message_id']}",
+                )
 
 
 def _stream_text(text: str):
@@ -19,6 +33,17 @@ def _stream_text(text: str):
         suffix = " " if index < len(words) - 1 else ""
         yield word + suffix
         time.sleep(0.02)
+
+
+def _render_sources(sources):
+    with st.expander("Sources", expanded=False):
+        for source in sources:
+            score = source.get("similarity_score")
+            score_text = "N/A" if score is None else f"{score:.4f}"
+            st.markdown(
+                f"**Page {source['page']}** | {source['document_name']} | Score: {score_text}"
+            )
+            st.caption(source["chunk_preview"])
 
 
 def render_chat_panel(rag_service):
@@ -43,13 +68,48 @@ def render_chat_panel(rag_service):
     with st.chat_message("user"):
         st.markdown(question)
 
+    assistant_payload = {
+        "role": "assistant",
+        "content": "",
+        "response_time_ms": None,
+        "sources": [],
+        "download_payload": None,
+        "message_id": f"assistant_{int(time.time() * 1000)}",
+    }
+
     with st.chat_message("assistant"):
         if rag_service is None:
             response = "Upload and build a knowledge base before starting the conversation."
             st.warning(response)
+            assistant_payload["content"] = response
         else:
+            start = time.perf_counter()
+            st.info("Searching documents...")
             with st.spinner("Generating answer..."):
-                response = rag_service.ask(question)
+                result = rag_service.ask(question)
+            response = result["answer"]
+            sources = result.get("sources", [])
+            elapsed_ms = int((time.perf_counter() - start) * 1000)
             st.write_stream(_stream_text(response))
+            if sources:
+                _render_sources(sources)
+            assistant_payload.update(
+                {
+                    "content": response,
+                    "response_time_ms": elapsed_ms,
+                    "sources": sources,
+                    "download_payload": json.dumps(
+                        {
+                            "question": question,
+                            "answer": response,
+                            "sources": sources,
+                            "response_time_ms": elapsed_ms,
+                            "created_at": datetime.utcnow().isoformat() + "Z",
+                        },
+                        indent=2,
+                    ),
+                }
+            )
 
-    append_chat_message("assistant", response)
+    append_chat_message("assistant", assistant_payload["content"])
+    st.session_state.messages[-1].update(assistant_payload)
