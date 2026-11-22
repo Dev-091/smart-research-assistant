@@ -8,7 +8,7 @@
   },
   "models": {
     "embedding_model": "sentence-transformers/all-mpnet-base-v2",
-    "llm_model": "llama-3.3-70b-versatile"
+    "llm_model": "openai/gpt-oss-20b"
   },
   "generation": {
     "temperature": 0.0,

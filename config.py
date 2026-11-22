@@ -22,6 +22,7 @@ FAISS_STORAGE_PATH = "storage"
 
 # LLM
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# Model IDs available to this Groq account are checked at setup time.
+GROQ_MODEL = "groq/compound-mini"
 TEMPERATURE = 0
 MAX_TOKENS = 1024

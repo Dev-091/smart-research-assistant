@@ -92,31 +92,36 @@ def render_chat_panel(rag_service):
         else:
             start = time.perf_counter()
             st.info("Searching documents...")
-            with st.spinner("Generating answer..."):
-                result = rag_service.ask(question, history=st.session_state.messages)
-            response = result["answer"]
-            sources = result.get("sources", [])
-            elapsed_ms = int((time.perf_counter() - start) * 1000)
-            st.write_stream(_stream_text(response))
-            if sources:
-                _render_sources(sources, query=question)
-            assistant_payload.update(
-                {
-                    "content": response,
-                    "response_time_ms": elapsed_ms,
-                    "sources": sources,
-                    "download_payload": json.dumps(
-                        {
-                            "question": question,
-                            "answer": response,
-                            "sources": sources,
-                            "response_time_ms": elapsed_ms,
-                            "created_at": datetime.utcnow().isoformat() + "Z",
-                        },
-                        indent=2,
-                    ),
-                }
-            )
+            try:
+                with st.spinner("Generating answer..."):
+                    result = rag_service.ask(question, history=st.session_state.messages)
+                response = result["answer"]
+                sources = result.get("sources", [])
+                elapsed_ms = int((time.perf_counter() - start) * 1000)
+                st.write_stream(_stream_text(response))
+                if sources:
+                    _render_sources(sources, query=question)
+                assistant_payload.update(
+                    {
+                        "content": response,
+                        "response_time_ms": elapsed_ms,
+                        "sources": sources,
+                        "download_payload": json.dumps(
+                            {
+                                "question": question,
+                                "answer": response,
+                                "sources": sources,
+                                "response_time_ms": elapsed_ms,
+                                "created_at": datetime.utcnow().isoformat() + "Z",
+                            },
+                            indent=2,
+                        ),
+                    }
+                )
+            except Exception as error:
+                response = f"Unable to generate an answer: {error}"
+                st.error(response)
+                assistant_payload["content"] = response
 
     append_chat_message("assistant", assistant_payload["content"])
     st.session_state.messages[-1].update(assistant_payload)

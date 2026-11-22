@@ -3,8 +3,6 @@ from pathlib import Path
 import streamlit as st
 
 from services.app_settings import AppSettingsService
-from services.document_manager import DocumentManager
-from services.rag_service import RAGService
 
 
 DEFAULT_THEME = "dark"
@@ -90,7 +88,17 @@ def get_rag_service():
     if st.session_state.rag_service is not None:
         return st.session_state.rag_service
 
+    # Do not import/load the embedding stack until an index is available.
+    # Importing sentence-transformers can take long enough to leave the initial
+    # Streamlit page looking blank, especially on a first run.
+    index_path = Path("storage") / "faiss.index"
+    documents_path = Path("storage") / "documents.pkl"
+    if not index_path.exists() or not documents_path.exists():
+        return None
+
     try:
+        from services.rag_service import RAGService
+
         st.session_state.rag_service = RAGService(settings=st.session_state.app_settings)
     except Exception:
         st.session_state.rag_service = None
@@ -99,6 +107,8 @@ def get_rag_service():
 
 
 def reload_rag_service():
+    from services.rag_service import RAGService
+
     st.session_state.rag_service = RAGService(settings=st.session_state.app_settings)
     return st.session_state.rag_service
 
@@ -108,6 +118,9 @@ def clear_rag_service():
 
 
 def get_document_manager():
+    # DocumentManager imports the indexing stack; keep the initial UI light.
+    from services.document_manager import DocumentManager
+
     return DocumentManager()
 
 

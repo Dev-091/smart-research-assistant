@@ -15,7 +15,6 @@ from services.frontend_state import (
     set_theme,
     update_app_settings,
 )
-from evaluation.ragas_eval import run_evaluation
 
 
 st.set_page_config(
@@ -95,6 +94,9 @@ def _handle_sidebar_actions(sidebar_state, document_manager, settings_service):
 
     if sidebar_state.get("run_evaluation"):
         try:
+            # RAGAS is optional and heavyweight; load it only when requested.
+            from evaluation.ragas_eval import run_evaluation
+
             with st.spinner("Evaluating knowledge base with RAGAS..."):
                 eval_results = run_evaluation(settings=st.session_state.app_settings)
             st.session_state.eval_summary = eval_results["summary"]

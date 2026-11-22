@@ -1,87 +1,15 @@
-# ==========================================
-# Core LangChain Framework
-# ==========================================
-langchain
+# Runtime dependencies for the Streamlit RAG application.
+# Evaluation dependencies (ragas/datasets) are intentionally excluded because
+# scikit-network does not provide a Python 3.14 Windows wheel.
+streamlit
 langchain-community
-langchain-core
-langchain-openai
 langchain-huggingface
 langchain-groq
 langchain-text-splitters
-
-# ==========================================
-# LLM Providers
-# ==========================================
-openai
-
-groq
-# ==========================================
-# Embedding Models
-# ==========================================
 sentence-transformers
-huggingface-hub
-transformers
 torch
-
-# ==========================================
-# Vector Databases
-# ==========================================
 faiss-cpu
-chromadb
-
-# ==========================================
-# Document Loaders
-# ==========================================
 pypdf
-pymupdf
-unstructured
-
-# ==========================================
-# Web Framework
-# ==========================================
-streamlit
-
-# ==========================================
-# Environment Variables
-# ==========================================
 python-dotenv
-
-# ==========================================
-# Token Counting
-# ==========================================
-tiktoken
-
-# ==========================================
-# Data Processing
-# ==========================================
+groq
 numpy
-pandas
-
-# ==========================================
-# Evaluation Framework
-# ==========================================
-ragas
-datasets
-appdirs
-diskcache
-instructor
-dill
-multiprocess
-
-# ==========================================
-# HTTP & Utilities
-# ==========================================
-requests
-httpx
-
-# ==========================================
-
-# Logging & Progress
-# ==========================================
-tqdm
-rich
-
-# ==========================================
-# Optional Utilities
-# ==========================================
-pydantic

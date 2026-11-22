@@ -38,9 +38,10 @@ SETTINGS_OPTIONS = {
         "sentence-transformers/all-mpnet-base-v2",
     ],
     "llm_models": [
-        "llama-3.3-70b-versatile",
-        "llama-3.1-8b-instant",
-        "mixtral-8x7b-32768",
+        "groq/compound-mini",
+        "groq/compound",
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
     ],
 }
 
@@ -89,4 +90,6 @@ class AppSettingsService:
         normalized["chunking"]["chunk_overlap"] = max(0, min(chunk_overlap, normalized["chunking"]["chunk_size"] - 1))
         normalized["generation"]["temperature"] = float(normalized["generation"]["temperature"])
         normalized["generation"]["max_tokens"] = max(64, int(normalized["generation"]["max_tokens"]))
+        if normalized["models"]["llm_model"] not in SETTINGS_OPTIONS["llm_models"]:
+            normalized["models"]["llm_model"] = GROQ_MODEL
         return normalized
